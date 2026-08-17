@@ -10,18 +10,14 @@ definitions, commands, stability configuration, and plotting support.
 
 ## Installation
 
-`meddeid-eval` is not on PyPI yet. Install the current public source release:
-
 ```bash
-git clone https://github.com/stighellemans/meddeid-eval.git
-cd meddeid-eval
-python -m pip install .
+python -m pip install meddeid-eval
 ```
 
 Optional extras add model inference and plotting support:
 
 ```bash
-python -m pip install '.[infer,plots]'
+python -m pip install 'meddeid-eval[infer,plots]'
 ```
 
 ## Usage
