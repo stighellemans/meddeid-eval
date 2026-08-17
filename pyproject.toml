@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "meddeid-eval"
-version = "0.2.0"
+version = "0.2.1"
 description = "Canonical metrics and stability analysis for MedDeID"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -20,8 +20,8 @@ classifiers = [
 dependencies = ["meddeid-core>=0.1.0", "meddeid-language-nl>=0.1.0", "PyYAML>=6"]
 
 [project.urls]
-Homepage = "https://meddeid.github.io/"
-Documentation = "https://meddeid.github.io/workflows/train-and-evaluate/"
+Homepage = "https://stighellemans.github.io/meddeid.github.io/"
+Documentation = "https://stighellemans.github.io/meddeid.github.io/workflows/train-and-evaluate/"
 Source = "https://github.com/stighellemans/meddeid-eval"
 Issues = "https://github.com/stighellemans/meddeid-eval/issues"
 "MedDeID on Hugging Face" = "https://huggingface.co/collections/stighellemans/meddeid"

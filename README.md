@@ -4,7 +4,7 @@ Reproducible evaluation for clinical de-identification. `meddeid-eval` computes
 exact-span metrics, character-level recall, core-PII recall, non-PII redaction
 rate, and stability results from canonical MedDeID JSONL files.
 
-See the [suite evaluation workflow](https://meddeid.github.io/workflows/train-and-evaluate/#evaluate-predictions)
+See the [suite evaluation workflow](https://stighellemans.github.io/meddeid.github.io/workflows/train-and-evaluate/#evaluate-predictions)
 for the end-to-end handoff. This repository remains authoritative for metric
 definitions, commands, stability configuration, and plotting support.
 
