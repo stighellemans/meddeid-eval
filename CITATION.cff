@@ -3,7 +3,7 @@ message: "If you use MedDeID evaluation, cite this software and the MedDeID data
 title: "MedDeID evaluation"
 abstract: "Canonical metrics and stability analysis for MedDeID."
 type: software
-version: "0.2.1"
+version: "0.2.2"
 date-released: 2026-08-17
 authors:
   - family-names: Hellemans
