@@ -45,3 +45,12 @@ def test_env_expands_in_text_source(tmp_path, monkeypatch):
     p = _write(tmp_path, "dataset: /d.jsonl\ntext_source: ${DEID_TEXTS}\nmodels: []\n")
     cfg = load_config(p)
     assert str(cfg.text_source) == "/env/texts.json"
+
+
+def test_config_selects_only_explicit_english_locale(tmp_path):
+    cfg = load_config(_write(tmp_path, "dataset: /d.jsonl\nlanguage_profile: en_US\nmodels: []\n"))
+    assert cfg.language_profile == "en-US"
+
+    import pytest
+    with pytest.raises(ValueError, match="available: nl-BE, nl-NL, en-GB, en-US"):
+        load_config(_write(tmp_path, "dataset: /d.jsonl\nlanguage_profile: en\nmodels: []\n"))

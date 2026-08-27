@@ -3,6 +3,11 @@
 All notable user-visible changes are recorded here. This project follows
 semantic versioning while pre-1.0 versions may still refine public contracts.
 
+## [0.3.0] - 2026-08-27
+
+- Refactored stability name/date helpers around a selected locale provider and
+  added exact `en-GB` and `en-US` support while rejecting bare `en`.
+
 ## [0.2.2] - 2026-08-18
 
 - Added privacy-safe detailed score tables and non-PII redaction metrics.

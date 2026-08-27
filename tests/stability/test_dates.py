@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from meddeid_eval.stability.dates import (
+    age_variants,
     format_variants,
     looks_like_date,
     shift_years,
     value_shift_variants,
     years_in_span,
 )
+from meddeid_eval.stability.providers import get_locale_provider
 
 
 def test_shift_years_preserves_format():
@@ -43,3 +45,22 @@ def test_looks_like_date():
     assert looks_like_date("12 mei 1983")
     assert not looks_like_date("43 jr")
     assert not looks_like_date("volgende week")
+
+
+def test_english_date_providers_keep_numeric_order_separate():
+    gb = get_locale_provider("en_GB")
+    us = get_locale_provider("en_US")
+    assert gb.parse_date("03/04/2025", "Date").value.isoformat() == "2025-04-03"
+    assert us.parse_date("03/04/2025", "Date").value.isoformat() == "2025-03-04"
+    assert looks_like_date("3 April 2025", provider=gb)
+    assert not looks_like_date("3 April 2025", provider=us)
+    assert looks_like_date("April 3, 2025", provider=us)
+    assert not looks_like_date("April 3, 2025", provider=gb)
+
+
+def test_english_format_and_age_variants_come_from_locale_provider():
+    gb = get_locale_provider("en-GB")
+    us = get_locale_provider("en-US")
+    assert any(text == "03/04/2025" for text, _ in format_variants("3 April 2025", provider=gb))
+    assert any(text == "04/03/2025" for text, _ in format_variants("April 3, 2025", provider=us))
+    assert any(text == "aged 42" for text, _ in age_variants("42-year-old", provider=us))

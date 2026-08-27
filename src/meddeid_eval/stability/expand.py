@@ -20,6 +20,7 @@ from .dates import age_variants, format_variants, looks_like_date, value_shift_v
 from .io import write_json, write_jsonl
 from .lookups import NameLookups, load_lookups
 from .offsets import assert_offsets, replace_one
+from .providers import LocaleProvider, get_locale_provider
 from .spans import aliases_for, canonical_label, doc_id_of, label_matches, raw_spans, role_of
 
 
@@ -92,12 +93,14 @@ def _name_variants(text, base_span, parts, role, span_index, cfg, lookups, rng, 
                             dimension="name_source", value=f"other_{trial}", base_text=base_text))
 
 
-def _date_variants(text, base_span, role, span_index, cfg, stats) -> Iterator[dict]:
+def _date_variants(
+    text, base_span, role, span_index, cfg, stats, provider: LocaleProvider
+) -> Iterator[dict]:
     doc_id = base_span["_doc_id"]
     dataset = base_span["_dataset"]
     base_text = base_span["text"]
     label = base_span["label"]
-    is_date = looks_like_date(base_text, label)
+    is_date = looks_like_date(base_text, label, provider=provider)
     kind = "date" if is_date else "age"
     role = role if is_date else "age"
 
@@ -116,7 +119,9 @@ def _date_variants(text, base_span, role, span_index, cfg, stats) -> Iterator[di
             yield _emit(doc_id, dataset, new_text,
                         _target(new_span, role=role, kind=kind, span_index=span_index,
                                 dimension="date_value_shift", value=str(year), base_text=base_text))
-        for repl, profile in format_variants(base_text, label, cfg.date.formats):
+        for repl, profile in format_variants(
+            base_text, label, cfg.date.formats, provider=provider
+        ):
             new_text, new_span = replace_one(text, base_span, repl)
             assert_offsets(new_text, new_span)
             stats["date::format"] += 1
@@ -125,7 +130,7 @@ def _date_variants(text, base_span, role, span_index, cfg, stats) -> Iterator[di
                                 dimension="date_format", value=profile, base_text=base_text))
     else:
         # age phrasing (e.g. "43 jr") — no date value to shift; vary the wording
-        for repl, tag in age_variants(base_text):
+        for repl, tag in age_variants(base_text, provider=provider):
             new_text, new_span = replace_one(text, base_span, repl)
             assert_offsets(new_text, new_span)
             stats["age::format"] += 1
@@ -141,6 +146,7 @@ def iter_variants(rows: list[dict[str, Any]], cfg: StabilityConfig, lookups: Nam
     date_aliases = aliases_for(list(cfg.date.labels) + list(cfg.date.age_labels)) if cfg.date.enabled else set()
     name_patterns = set(cfg.name.patterns)
     rng = random.Random(cfg.seed)
+    provider = get_locale_provider(cfg.language_profile)
 
     for idx, row in enumerate(rows):
         text = str(row.get("text", ""))
@@ -168,7 +174,9 @@ def iter_variants(rows: list[dict[str, Any]], cfg: StabilityConfig, lookups: Nam
             elif cfg.date.enabled and label_matches(span, date_aliases):
                 span_index += 1
                 role = "date"
-                yield from _date_variants(text, base, role, span_index, cfg, stats)
+                yield from _date_variants(
+                    text, base, role, span_index, cfg, stats, provider
+                )
 
 
 def run_expand(cfg: StabilityConfig, dry_run: bool = False) -> dict[str, Any]:
@@ -179,7 +187,8 @@ def run_expand(cfg: StabilityConfig, dry_run: bool = False) -> dict[str, Any]:
     if cov["without_text"]:
         print(f"[expand] warning: {cov['without_text']}/{cov['rows']} docs have no text "
               f"(set `text_source` in the config to join a document_id->text map)", flush=True)
-    lookups = load_lookups()
+    provider = get_locale_provider(cfg.language_profile)
+    lookups = load_lookups(provider=provider)
     stats: Counter = Counter()
 
     out_path = cfg.output_dir / "variants.jsonl"
@@ -188,6 +197,7 @@ def run_expand(cfg: StabilityConfig, dry_run: bool = False) -> dict[str, Any]:
         for _ in iter_variants(rows, cfg, lookups, stats):
             stats["variants_total"] += 1
         return {"dry_run": True, "input": str(cfg.dataset), "coverage": cov,
+                "language_profile": provider.profile_id,
                 "lookup_source": lookups.source, "counts": dict(stats)}
 
     def gen() -> Iterator[dict]:
@@ -198,6 +208,7 @@ def run_expand(cfg: StabilityConfig, dry_run: bool = False) -> dict[str, Any]:
     write_jsonl(out_path, gen())
     summary = {
         "input": str(cfg.dataset), "coverage": cov, "variants": str(out_path),
+        "language_profile": provider.profile_id,
         "lookup_source": lookups.source, "seed": cfg.seed, "counts": dict(stats),
     }
     write_json(cfg.output_dir / "expand_summary.json", summary)

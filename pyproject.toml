@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "meddeid-eval"
-version = "0.2.2"
+version = "0.3.0"
 description = "Canonical metrics and stability analysis for MedDeID"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -17,7 +17,12 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
 ]
-dependencies = ["meddeid-core>=0.1.0", "meddeid-language-nl>=0.1.0", "PyYAML>=6"]
+dependencies = [
+    "meddeid-core>=0.2,<0.3",
+    "meddeid-language-nl>=0.2,<0.3",
+    "meddeid-language-en>=0.2,<0.3",
+    "PyYAML>=6",
+]
 
 [project.urls]
 Homepage = "https://stighellemans.github.io/meddeid.github.io/"
@@ -27,7 +32,7 @@ Issues = "https://github.com/stighellemans/meddeid-eval/issues"
 "MedDeID on Hugging Face" = "https://huggingface.co/collections/stighellemans/meddeid"
 
 [project.optional-dependencies]
-infer = ["meddeid>=0.1.0"]
+infer = ["meddeid>=0.2,<0.3"]
 plots = ["matplotlib>=3.7"]
 dev = ["pytest>=8", "matplotlib>=3.7"]
 

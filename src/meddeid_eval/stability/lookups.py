@@ -1,4 +1,4 @@
-"""Versioned ``nl-BE`` name lookups used by stability perturbations."""
+"""Locale-provider name lookups used by stability perturbations."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from meddeid_language_nl import lookup_source, lookup_values
+from .providers import LocaleProvider, get_locale_provider
 
 
 @dataclass
@@ -46,24 +46,40 @@ def _from_names_dir(names_dir: Path, source: str) -> NameLookups | None:
     )
 
 
-def load_lookups(lookup_dir: str | None = None) -> NameLookups:
+def load_lookups(
+    lookup_dir: str | None = None, *, provider: LocaleProvider | None = None
+) -> NameLookups:
+    selected = provider or get_locale_provider()
     if lookup_dir:
         root = Path(lookup_dir).expanduser()
         for names_dir in (root, root / "names"):
             got = _from_names_dir(names_dir, str(names_dir))
             if got is not None:
                 return got
-        raise RuntimeError(f"no complete nl-BE name lookups under {root}")
+        raise RuntimeError(
+            f"no complete {selected.profile_id} name lookups under {root}"
+        )
+
+    if selected.profile_id in {"nl-BE", "nl-NL"}:
+        interfixes = list(selected.lookup_values("interfixes"))
+        interfix_surnames = list(selected.lookup_values("interfix_surnames"))
+    else:
+        interfixes = list(selected.lookup_values("surname_particles"))
+        interfix_surnames = []
 
     return NameLookups(
-        prefixes=list(lookup_values("prefixes")),
-        first_names=list(lookup_values("first_names")),
-        surnames=list(lookup_values("family_names")),
-        interfixes=list(lookup_values("interfixes")),
-        interfix_surnames=list(lookup_values("interfix_surnames")),
-        source=lookup_source(),
+        prefixes=list(selected.lookup_values("prefixes")),
+        first_names=list(selected.lookup_values("first_names")),
+        surnames=list(selected.lookup_values("family_names")),
+        interfixes=interfixes,
+        interfix_surnames=interfix_surnames,
+        source=selected.lookup_source(None),
     )
 
 
 def load_lookups_from_cfg(cfg: dict[str, Any]) -> NameLookups:
-    return load_lookups(str(cfg.get("language_lookup_dir", "")).strip() or None)
+    provider = get_locale_provider(str(cfg.get("language_profile", "nl-BE")))
+    return load_lookups(
+        str(cfg.get("language_lookup_dir", "")).strip() or None,
+        provider=provider,
+    )

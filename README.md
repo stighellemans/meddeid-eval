@@ -64,9 +64,19 @@ characters covered by any predicted redaction. Each primary gold span owns a
 nested `subannotations` list. `formatting`, `additional_info`, `medical_info`,
 `title`, and `time` segments are excluded from the denominator.
 
-Stability perturbations use the complete `nl-BE` resources from
-`meddeid-language-nl`; incomplete resources are reported as installation
-errors.
+Stability perturbations use the configured locale provider and its complete
+packaged resources. Dutch supports explicit `nl-BE` and `nl-NL` locale
+selection; English must be selected as
+either `en-GB` or `en-US` because bare `en` is ambiguous:
+
+```yaml
+dataset: annotations.jsonl
+output_dir: results/stability
+language_profile: en-GB
+```
+
+The same provider owns name lookup selection and date/age interpretation, so
+GB DMY and US MDY behavior cannot fall back to Dutch globals.
 
 `stability analyze` writes semantically ordered grouped bars, a year-shift line
 plot with note-cluster bootstrap intervals, and a paired degradation forest in

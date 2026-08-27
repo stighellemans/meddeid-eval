@@ -14,6 +14,7 @@ from typing import Any
 
 from .dates import DATE_FORMAT_PROFILES
 from .names import CAPITALIZATION_MODES, DEFAULT_NAME_PATTERNS, DEFAULT_TITLE, NAME_FORMATS
+from .providers import normalize_profile_id
 
 # ${VAR}, ${VAR:-default}, or $VAR  — lets a config point at a shared data endpoint
 # via an environment variable (e.g. dataset: ${DEID_ANNOTATIONS_PATH:-/abs/default}).
@@ -92,6 +93,7 @@ class StabilityConfig:
     seed: int = 42
     max_docs: int = 0
     device: str = "auto"
+    language_profile: str = "nl-BE"
     text_source: Path | None = None  # optional map (document_id -> text) for split datasets
     name: NameCfg = field(default_factory=NameCfg)
     date: DateCfg = field(default_factory=DateCfg)
@@ -143,6 +145,7 @@ def load_config(path: str | Path) -> StabilityConfig:
         seed=int(raw.get("seed", 42)),
         max_docs=int(raw.get("max_docs", 0)),
         device=str(raw.get("device", "auto")),
+        language_profile=normalize_profile_id(raw.get("language_profile", "nl-BE")),
         text_source=_resolve(base, raw.get("text_source")),
         name=NameCfg(
             enabled=bool(name_raw.get("enabled", True)),

@@ -69,3 +69,29 @@ def test_baseline_text_unchanged(lookups):
     for v in iter_variants(_rows(), cfg, lookups, Counter()):
         if v["target"]["dimension"] == "baseline":
             assert v["text"] == original
+
+
+def test_english_us_expansion_uses_us_date_provider():
+    text = "Patient Olivia Smith was seen April 3, 2025."
+    name = "Olivia Smith"
+    raw_date = "April 3, 2025"
+    rows = [{
+        "document_id": "en-us-1",
+        "text": text,
+        "spans": [
+            {"begin": text.index(name), "end": text.index(name) + len(name), "label": "Name:Patient"},
+            {"begin": text.index(raw_date), "end": text.index(raw_date) + len(raw_date), "label": "Date"},
+        ],
+    }]
+    cfg = _cfg()
+    cfg.language_profile = "en-US"
+    from meddeid_eval.stability.lookups import load_lookups
+    from meddeid_eval.stability.providers import get_locale_provider
+    lookups = load_lookups(provider=get_locale_provider("en-US"))
+    variants = list(iter_variants(rows, cfg, lookups, Counter()))
+    date_formats = [
+        row["text"] for row in variants
+        if row["target"]["dimension"] == "date_format"
+    ]
+    assert any("04/03/2025" in value for value in date_formats)
+    assert not any("03/04/2025" in value for value in date_formats)
