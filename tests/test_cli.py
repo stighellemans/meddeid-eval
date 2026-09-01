@@ -97,3 +97,69 @@ def test_score_metadata_and_plot_cli_round_trip(tmp_path, capsys) -> None:
         "exact_label_confusion.png",
         "accuracy_vs_runtime.png",
     }
+
+
+def test_pseudonymization_cli_reuses_saved_predictions(tmp_path, capsys) -> None:
+    text = "Datum 01/02/2020."
+    begin = text.index("01/02/2020")
+    gold_path = tmp_path / "gold.jsonl"
+    predictions_path = tmp_path / "predictions.jsonl"
+    output_dir = tmp_path / "pseudonymization"
+    _write_jsonl(
+        gold_path,
+        [
+            {
+                "document_id": "d1",
+                "text": text,
+                "spans": [
+                    {
+                        "begin": begin,
+                        "end": begin + len("01/02/2020"),
+                        "label": "Date",
+                    }
+                ],
+            }
+        ],
+    )
+    _write_jsonl(
+        predictions_path,
+        [
+            {
+                "document_id": "d1",
+                "spans": [
+                    {
+                        "begin": begin,
+                        "end": begin + len("01/02/2020"),
+                        "label": "Date",
+                    }
+                ],
+            }
+        ],
+    )
+
+    assert (
+        main(
+            [
+                "pseudonymization",
+                "--gold",
+                str(gold_path),
+                "--predictions",
+                str(predictions_path),
+                "--output-dir",
+                str(output_dir),
+                "--language-profile",
+                "nl-BE",
+                "--document-creation-date",
+                "2025-01-15",
+                "--date-shift-days",
+                "371",
+                "--name",
+                "test-run",
+                "--generate-missing-replacements",
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["privacy_check"] == "passed"
+    assert payload["summary"][0]["end_to_end_failure_rate"] == 0.0

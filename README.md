@@ -44,6 +44,36 @@ label, character-level label overlap, and exact-boundary label confusion. Source
 text and document identifiers are never included. `non_pii_redaction_rate` is the fraction of characters
 outside annotated PII spans covered by a prediction.
 
+### Predicted-span pseudonymization
+
+Measure the actual downstream date/age failure rate from saved predictions,
+without rerunning inference:
+
+```bash
+meddeid-eval pseudonymization \
+  --gold meddeid-dutch-synthetic-benchmark.jsonl \
+  --predictions predictions.jsonl \
+  --language-profile nl-BE \
+  --document-creation-date 2025-01-15 \
+  --date-shift-days 371 \
+  --name meddeid-dutch-synth \
+  --output-dir results/pseudonymization
+```
+
+The headline denominator is every gold `Date` and `Age_Birthdate` span. A
+target is end-to-end valid only when one predicted span fully covers it, assigns
+the correct label, and contains the protocol-valid replacement produced by the
+selected language profile. The report separately gives the residual-exposure
+rate: a wrong-label placeholder can remove the identifier while still failing
+the clinically useful pseudonymization protocol.
+
+MedDeID inference output already contains each span's exact `replacement`.
+For canonical predictions from another detector that contain boundaries and
+labels but no replacements, add `--generate-missing-replacements` to apply the
+current MedDeID substitution layer during evaluation. The command writes only
+aggregate, controlled-vocabulary CSV/JSON files and verifies a privacy manifest;
+source text, document identifiers, and row-level outcomes are never exported.
+
 ### Comparison plots
 
 Record a unique `--name` in each score artifact and render one or more systems:

@@ -41,6 +41,33 @@ def main(argv: list[str] | None = None) -> int:
         "--formats", default="png,pdf", help="comma-separated png,pdf,svg"
     )
     plot.add_argument("--dpi", type=int, default=300, help="PNG resolution")
+    pseudonymization = sub.add_parser(
+        "pseudonymization",
+        help="evaluate date/age pseudonymization from predicted spans",
+    )
+    pseudonymization.add_argument("--gold", required=True)
+    pseudonymization.add_argument("--predictions", required=True)
+    pseudonymization.add_argument("--output-dir", required=True)
+    pseudonymization.add_argument(
+        "--language-profile",
+        required=True,
+        choices=("nl-BE", "nl-NL", "en-GB", "en-US"),
+    )
+    pseudonymization.add_argument("--document-creation-date", required=True)
+    pseudonymization.add_argument("--date-shift-days", required=True, type=int)
+    pseudonymization.add_argument(
+        "--name",
+        default="predictions",
+        help="privacy-safe source id stored in the aggregate methodology",
+    )
+    pseudonymization.add_argument(
+        "--generate-missing-replacements",
+        action="store_true",
+        help=(
+            "apply the selected MedDeID language profile when prediction spans "
+            "do not already contain replacement values"
+        ),
+    )
     args = parser.parse_args(argv)
     if args.command == "stability":
         from .stability.cli import main as stability_main
@@ -57,6 +84,38 @@ def main(argv: list[str] | None = None) -> int:
             payloads, args.output_dir, formats=formats, dpi=args.dpi
         )
         print(json.dumps({"plots": [str(path) for path in paths]}, indent=2))
+        return 0
+    if args.command == "pseudonymization":
+        from .pseudonymization import (
+            EvaluationSettings,
+            aggregate_tables,
+            evaluate_predicted_pseudonymization,
+            write_safe_export,
+        )
+
+        settings = EvaluationSettings(
+            language_profile=args.language_profile,
+            document_creation_date=args.document_creation_date,
+            date_shift_days=args.date_shift_days,
+            generate_missing_replacements=args.generate_missing_replacements,
+        )
+        outcomes = evaluate_predicted_pseudonymization(
+            read_jsonl(args.gold), read_jsonl(args.predictions), settings
+        )
+        manifest = write_safe_export(
+            args.output_dir, outcomes, settings, prediction_source=args.name
+        )
+        summary, _ = aggregate_tables(outcomes)
+        print(
+            json.dumps(
+                {
+                    "summary": summary,
+                    "output_dir": str(Path(args.output_dir)),
+                    "privacy_check": manifest["privacy_check"],
+                },
+                indent=2,
+            )
+        )
         return 0
     payload = score_documents(read_jsonl(args.gold), read_jsonl(args.predictions))
     if args.name or args.seconds is not None or args.device or args.method_type:

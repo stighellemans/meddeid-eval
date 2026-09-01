@@ -3,6 +3,11 @@
 All notable user-visible changes are recorded here. This project follows
 semantic versioning while pre-1.0 versions may still refine public contracts.
 
+## Unreleased
+
+- Added aggregate-only end-to-end date/age pseudonymization evaluation from
+  saved predicted spans, including protocol failure and residual-exposure rates.
+
 ## [0.3.0] - 2026-08-27
 
 - Refactored stability name/date helpers around a selected locale provider and
