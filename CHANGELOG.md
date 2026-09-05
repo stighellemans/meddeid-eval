@@ -3,7 +3,9 @@
 All notable user-visible changes are recorded here. This project follows
 semantic versioning while pre-1.0 versions may still refine public contracts.
 
-## Unreleased
+## [Unreleased]
+
+## [0.4.0] - 2026-09-05
 
 - Added aggregate-only end-to-end date/age pseudonymization evaluation from
   saved predicted spans, including protocol failure and residual-exposure rates.
