@@ -25,6 +25,7 @@ def test_score_documents_exact_and_character_metrics() -> None:
     assert result["exact_f1"] == 1.0
     assert result["character_recall"] == 1.0
     assert result["core_pii_recall"] == 1.0
+    assert result["exact_label_accuracy_matched"] == 1.0
 
 
 def test_core_pii_recall_uses_subannotations_and_is_label_agnostic() -> None:
@@ -55,6 +56,39 @@ def test_core_pii_recall_uses_subannotations_and_is_label_agnostic() -> None:
 
     assert result["character_recall"] == 0.0
     assert result["core_pii_recall"] == 1.0
+    assert result["exact_label_accuracy_matched"] == 0.0
+
+
+def test_label_accuracy_ignores_boundary_error_after_overlap_matching() -> None:
+    gold = [
+        {
+            "document_id": "d1",
+            "spans": [
+                {
+                    "begin": 0,
+                    "end": 5,
+                    "label": "Name:Patient",
+                    "subannotations": [
+                        {"begin": 0, "end": 3, "category": "name_identifier"},
+                        {"begin": 3, "end": 5, "category": "formatting"},
+                    ],
+                }
+            ],
+        }
+    ]
+    predicted = [
+        {
+            "document_id": "d1",
+            "spans": [{"begin": 0, "end": 3, "label": "Name:Patient"}],
+        }
+    ]
+
+    result = score_documents(gold, predicted)
+
+    assert result["exact_f1"] == 0.0
+    assert result["exact_label_accuracy_matched"] == 1.0
+    assert result["label_matched_spans"] == 1
+    assert result["label_correct_spans"] == 1
 
 
 def test_core_pii_recall_reads_legacy_top_level_subannotations() -> None:
@@ -162,10 +196,99 @@ def test_score_documents_emits_privacy_safe_detailed_tables() -> None:
     assert result["details"]["label_confusion_chars"] == [
         {"gold_label": "Name:Patient", "prediction_label": "Name:Other", "chars": 3}
     ]
+    assert result["details"]["exact_by_label"] == [
+        {
+            "label": "Name:Other",
+            "exact_true_positive": 0,
+            "gold_spans": 0,
+            "predicted_spans": 1,
+            "exact_precision": 0.0,
+            "exact_recall": None,
+            "exact_f1": 0.0,
+        },
+        {
+            "label": "Name:Patient",
+            "exact_true_positive": 0,
+            "gold_spans": 1,
+            "predicted_spans": 0,
+            "exact_precision": None,
+            "exact_recall": 0.0,
+            "exact_f1": 0.0,
+        },
+        {
+            "label": "Organization:Healthcare",
+            "exact_true_positive": 0,
+            "gold_spans": 1,
+            "predicted_spans": 0,
+            "exact_precision": None,
+            "exact_recall": 0.0,
+            "exact_f1": 0.0,
+        },
+        {
+            "label": "Profession",
+            "exact_true_positive": 0,
+            "gold_spans": 0,
+            "predicted_spans": 1,
+            "exact_precision": 0.0,
+            "exact_recall": None,
+            "exact_f1": 0.0,
+        },
+    ]
     assert result["details"]["exact_label_confusion"] == [
+        {
+            "gold_label": "<spurious>",
+            "prediction_label": "Profession",
+            "spans": 1,
+        },
         {
             "gold_label": "Name:Patient",
             "prediction_label": "Name:Other",
             "spans": 1,
+        },
+        {
+            "gold_label": "Organization:Healthcare",
+            "prediction_label": "<missed>",
+            "spans": 1,
+        },
+    ]
+    assert result["details"]["matched_label_confusion"] == [
+        {
+            "gold_label": "<spurious>",
+            "prediction_label": "Profession",
+            "spans": 1,
+        },
+        {
+            "gold_label": "Name:Patient",
+            "prediction_label": "Name:Other",
+            "spans": 1,
+        },
+        {
+            "gold_label": "Organization:Healthcare",
+            "prediction_label": "<missed>",
+            "spans": 1,
+        },
+    ]
+
+
+def test_exact_by_label_records_correct_span_metrics() -> None:
+    rows = [
+        {
+            "document_id": "d1",
+            "text": "Jan",
+            "spans": [{"begin": 0, "end": 3, "label": "Name:Patient"}],
+        }
+    ]
+
+    result = score_documents(rows, rows)
+
+    assert result["details"]["exact_by_label"] == [
+        {
+            "label": "Name:Patient",
+            "exact_true_positive": 1,
+            "gold_spans": 1,
+            "predicted_spans": 1,
+            "exact_precision": 1.0,
+            "exact_recall": 1.0,
+            "exact_f1": 1.0,
         }
     ]

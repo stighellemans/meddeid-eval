@@ -5,6 +5,16 @@ semantic versioning while pre-1.0 versions may still refine public contracts.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-08
+
+- Added a paper-style evaluation battery that selects the registered public
+  baseline from the data language profile and emits reproducible reports,
+  tables, figures, confusion matrices, subannotation coverage, and paired
+  document-bootstrap intervals.
+- Added matched-span label accuracy and explicit missed/spurious outcomes,
+  expanded primary-label and subannotation plots, and strengthened score-input
+  validation and regression coverage.
+
 ## [0.4.0] - 2026-09-05
 
 - Added aggregate-only end-to-end date/age pseudonymization evaluation from

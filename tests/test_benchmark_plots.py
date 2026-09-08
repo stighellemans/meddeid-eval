@@ -11,9 +11,21 @@ def _payload(name: str, recall: float, seconds: float) -> dict:
     return {
         "run": {"name": name, "seconds": seconds, "device": "cpu"},
         "core_pii_recall": recall,
+        "exact_label_accuracy_matched": recall - 0.02,
         "exact_f1": recall - 0.05,
         "non_pii_redaction_rate": 0.01,
         "details": {
+            "exact_by_label": [
+                {
+                    "label": "Name:Patient",
+                    "exact_true_positive": 9,
+                    "gold_spans": 10,
+                    "predicted_spans": 10,
+                    "exact_precision": 0.9,
+                    "exact_recall": 0.9,
+                    "exact_f1": 0.9,
+                },
+            ],
             "recall_by_gold_label": [
                 {
                     "gold_label": "Name:Patient",
@@ -57,8 +69,9 @@ def test_render_comparison_plots_creates_complete_family(tmp_path) -> None:
     stems = {path.stem for path in paths}
     assert stems == {
         "performance_overview",
+        "exact_metrics_by_label",
         "recall_by_gold_label",
-        "recall_by_subannotation",
+        "subannotation_coverage_matrix",
         "non_pii_redactions",
         "exact_label_confusion",
         "accuracy_vs_runtime",

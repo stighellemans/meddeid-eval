@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "meddeid-eval"
-version = "0.4.0"
+version = "0.5.0"
 description = "Canonical metrics and stability analysis for MedDeID"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,7 +32,7 @@ Issues = "https://github.com/stighellemans/meddeid-eval/issues"
 "MedDeID on Hugging Face" = "https://huggingface.co/collections/stighellemans/meddeid"
 
 [project.optional-dependencies]
-infer = ["meddeid>=0.2,<0.4"]
+infer = ["meddeid>=0.4,<0.5"]
 plots = ["matplotlib>=3.7"]
 dev = ["pytest>=8", "matplotlib>=3.7"]
 
